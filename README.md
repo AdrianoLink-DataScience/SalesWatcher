@@ -1,7 +1,7 @@
 # 🕵️‍♂️ SalesWatcher: Pipeline de Automação de Vendas
 
 Este projeto simula um ambiente corporativo real onde arquivos de vendas diárias são recebidos, processados, validados e carregados automaticamente em um banco de dados analítico.
-
+<img width="1907" height="933" alt="Streamlit_Dasboard" src="https://github.com/user-attachments/assets/94598fd4-38f9-4a96-b9dc-191d9f8a22f3" />
 ## 🛠 Tecnologias Utilizadas
 * **Shell Script (Bash):** Orquestração, manipulação de arquivos, logs e validação de diretórios.
 * **Python:** Geração de dados (faker) e interação com Banco de Dados.
@@ -16,9 +16,7 @@ Este projeto simula um ambiente corporativo real onde arquivos de vendas diária
     * Verifica o código de saída (sucesso/erro).
     * Move arquivos processados para `data_processed`.
     * Registra cada passo em `logs/pipeline.log`.
-3.  **Carga:** O script `processar_dados.py` insere os dados no banco SQLite, evitando duplicidades.
-<img width="1888" height="917" alt="dashboard_preview png" src="https://github.com/user-attachments/assets/21dfec88-9bc2-415d-a56b-12dc9f245190" />
-
+3.  **Carga:** O script `processar_dados.py` insere os dados no banco SQLite, evitando duplicidades. 
 ## 🚀 Como rodar o projeto
 
 ### Pré-requisitos
