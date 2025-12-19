@@ -17,6 +17,7 @@ Este projeto simula um ambiente corporativo real onde arquivos de vendas diária
     * Move arquivos processados para `data_processed`.
     * Registra cada passo em `logs/pipeline.log`.
 3.  **Carga:** O script `processar_dados.py` insere os dados no banco SQLite, evitando duplicidades.
+<img width="1888" height="917" alt="dashboard_preview png" src="https://github.com/user-attachments/assets/21dfec88-9bc2-415d-a56b-12dc9f245190" />
 
 ## 🚀 Como rodar o projeto
 
