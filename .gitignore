@@ -1,0 +1,14 @@
+# Ignorar arquivos de dados
+data_raw/*.csv
+data_processed/*.csv
+
+# Ignorar o banco de dados (pois ele é gerado pelo código)
+db/*.db
+
+# Ignorar logs
+logs/*.log
+
+# Ignorar arquivos de sistema/cache do Python
+__pycache__/
+*.pyc
+.DS_Store
