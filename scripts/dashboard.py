@@ -2,15 +2,14 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import os
+import altair as alt  # Importando a biblioteca de gráficos avançados
 
-# Configuração da Página (Ícone e Título)
-st.set_page_config(page_title="SalesWatcher Dashboard", page_icon="📈", layout="wide")
+# Configuração da Página
+st.set_page_config(page_title="SalesWatcher Dashboard", page_icon="📊", layout="wide")
 
 # --- FUNÇÃO PARA CARREGAR DADOS ---
-# Usar @st.cache_data faz o dashboard ficar super rápido, pois não relê o banco a cada clique
 @st.cache_data
 def load_data():
-    # Caminho do banco (Blindado para Nuvem)
     pasta_atual = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(pasta_atual, "..", "db", "vendas.db")
     
@@ -19,87 +18,94 @@ def load_data():
         query = "SELECT * FROM vendas"
         df = pd.read_sql(query, conn)
         conn.close()
-        
-        # Garante que a coluna 'data' seja reconhecida como data
         df['data'] = pd.to_datetime(df['data'])
         return df
     except Exception as e:
         st.error(f"Erro ao conectar: {e}")
         return pd.DataFrame()
 
-# Carrega os dados
 df = load_data()
 
-# --- BARRA LATERAL (FILTROS) ---
-st.sidebar.header("🔍 Filtros")
-st.sidebar.markdown("Use as opções abaixo para filtrar os resultados.")
+# --- BARRA LATERAL ---
+st.sidebar.header("🔍 Filtros Avançados")
 
-# Filtro de Loja
 if not df.empty:
-    lojas_disponiveis = df['loja'].unique()
-    lojas_selecionadas = st.sidebar.multiselect("Selecione a Loja:", lojas_disponiveis, default=lojas_disponiveis)
+    lojas = df['loja'].unique()
+    sel_lojas = st.sidebar.multiselect("Lojas:", lojas, default=lojas)
     
-    # Filtro de Produto
-    produtos_disponiveis = df['produto'].unique()
-    produtos_selecionados = st.sidebar.multiselect("Selecione o Produto:", produtos_disponiveis, default=produtos_disponiveis)
+    produtos = df['produto'].unique()
+    sel_produtos = st.sidebar.multiselect("Produtos:", produtos, default=produtos)
 
-    # Aplica os filtros no DataFrame
     df_filtrado = df[
-        (df['loja'].isin(lojas_selecionadas)) & 
-        (df['produto'].isin(produtos_selecionados))
+        (df['loja'].isin(sel_lojas)) & 
+        (df['produto'].isin(sel_produtos))
     ]
 else:
     df_filtrado = df
 
-# --- CORPO DO DASHBOARD ---
-st.title("📊 SalesWatcher: Visão Estratégica")
-st.markdown("Monitoramento de vendas e performance em tempo real.")
+# --- DASHBOARD ---
+st.title("📊 SalesWatcher: Analytics")
 st.markdown("---")
 
 if df_filtrado.empty:
-    st.warning("⚠️ Nenhum dado encontrado com os filtros selecionados.")
+    st.warning("Nenhum dado disponível com os filtros atuais.")
 else:
-    # 1. KPIs (Indicadores Principais)
-    total_vendas = df_filtrado['valor_total'].sum()
-    qtd_total = df_filtrado['quantidade'].sum()
-    ticket_medio = total_vendas / qtd_total if qtd_total > 0 else 0
+    # 1. KPIs
+    total = df_filtrado['valor_total'].sum()
+    qtd = df_filtrado['quantidade'].sum()
+    ticket = total / qtd if qtd > 0 else 0
     
-    col1, col2, col3 = st.columns(3)
-    col1.metric("💰 Receita Total", f"R$ {total_vendas:,.2f}")
-    col2.metric("📦 Total de Itens", f"{qtd_total}")
-    col3.metric("🏷️ Ticket Médio", f"R$ {ticket_medio:,.2f}")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("💰 Receita Total", f"R$ {total:,.2f}")
+    c2.metric("📦 Volume de Vendas", f"{qtd}")
+    c3.metric("🏷️ Ticket Médio", f"R$ {ticket:,.2f}")
     
     st.markdown("---")
 
-    # 2. Gráficos em Abas (Melhor organização)
-    aba1, aba2, aba3 = st.tabs(["📈 Evolução Temporal", "🏪 Por Loja", "🛍️ Por Produto"])
+    # 2. Gráficos Customizados com Altair
+    aba1, aba2, aba3 = st.tabs(["📈 Tendência", "🏪 Performance Lojas", "🛍️ Top Produtos"])
 
     with aba1:
-        st.subheader("Evolução das Vendas (Dia a Dia)")
-        # Agrupa por data para o gráfico de linha
-        vendas_tempo = df_filtrado.groupby('data')['valor_total'].sum()
-        st.line_chart(vendas_tempo, color="#00FF00") # Linha verde neon (se o tema permitir)
+        st.subheader("Evolução Diária")
+        dados_tempo = df_filtrado.groupby('data')['valor_total'].sum().reset_index()
+        
+        # Gráfico de Linha com Pontos
+        grafico_tempo = alt.Chart(dados_tempo).mark_line(point=True).encode(
+            x=alt.X('data', title='Data', axis=alt.Axis(format='%d/%m')),
+            y=alt.Y('valor_total', title='Receita (R$)'),
+            tooltip=['data', 'valor_total']
+        ).properties(height=400)
+        
+        st.altair_chart(grafico_tempo, use_container_width=True)
 
     with aba2:
-        st.subheader("Performance por Loja")
-        vendas_loja = df_filtrado.groupby("loja")["valor_total"].sum().sort_values(ascending=True)
-        st.bar_chart(vendas_loja) # Streamlit ajusta a cor automática
+        st.subheader("Receita por Loja")
+        dados_loja = df_filtrado.groupby('loja')['valor_total'].sum().reset_index()
+        
+        # Gráfico de Barras com Rótulo a 45 graus
+        grafico_loja = alt.Chart(dados_loja).mark_bar().encode(
+            x=alt.X('loja', title='Loja', axis=alt.Axis(labelAngle=-45)), # <--- A MÁGICA AQUI
+            y=alt.Y('valor_total', title='Receita Total'),
+            color='loja',
+            tooltip=['loja', 'valor_total']
+        ).properties(height=400)
+        
+        st.altair_chart(grafico_loja, use_container_width=True)
 
     with aba3:
-        st.subheader("Produtos Mais Vendidos (Qtd)")
-        vendas_produto = df_filtrado.groupby("produto")["quantidade"].sum().sort_values(ascending=True)
-        st.bar_chart(vendas_produto)
+        st.subheader("Mix de Produtos (Qtd)")
+        dados_prod = df_filtrado.groupby('produto')['quantidade'].sum().reset_index()
+        
+        grafico_prod = alt.Chart(dados_prod).mark_bar().encode(
+            x=alt.X('produto', title='Produto', sort='-y', axis=alt.Axis(labelAngle=-45)), # Ordenado do maior para o menor
+            y=alt.Y('quantidade', title='Qtd Vendida'),
+            color=alt.value('#FF4B4B'), # Cor personalizada (vermelho Streamlit)
+            tooltip=['produto', 'quantidade']
+        ).properties(height=400)
+        
+        st.altair_chart(grafico_prod, use_container_width=True)
 
-    # 3. Tabela de Dados Detalhada
-    st.markdown("---")
-    with st.expander("🔎 Ver Base de Dados Detalhada"):
-        st.dataframe(
-            df_filtrado[['data', 'loja', 'produto', 'quantidade', 'valor_total']].sort_values(by='data', ascending=False),
-            use_container_width=True,
-            hide_index=True
-        )
-
-    # Botão de Atualizar
+    # 3. Botão de Refresh
     if st.sidebar.button("🔄 Atualizar Dados"):
-        st.cache_data.clear() # Limpa o cache para forçar releitura do banco
+        st.cache_data.clear()
         st.rerun()
