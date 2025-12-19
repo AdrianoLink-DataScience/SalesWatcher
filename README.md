@@ -29,3 +29,11 @@ Este projeto simula um ambiente corporativo real onde arquivos de vendas diária
 ```bash
 git clone [https://github.com/SEU-USUARIO/SalesWatcher.git](https://github.com/SEU-USUARIO/SalesWatcher.git)
 cd SalesWatcher
+## 📊 Dashboard Interativo
+
+O projeto conta com uma interface gráfica desenvolvida em **Streamlit** para visualização dos KPIs.
+
+Para rodar o dashboard:
+```bash
+cd scripts
+python -m streamlit run dashboard.py
